@@ -15,40 +15,128 @@ function Counter() {
 }
 
 function App() {
-  // 1. define state variable
   const [showForm, setShowForm] = useState(false);
+  const [facts, setFacts] = useState(initialFacts);
 
   return (
     <>
-      {/* HEADER */}
-      <header className="header">
-        <div className="logo">
-          <img src="logo.png" alt="Today I Learned Logo" />
-          <h1>Today I Learned</h1>
-        </div>
+      <Header showForm={showForm} setShowForm={setShowForm} />
 
-        <button
-          className="btn btn-large btn-open"
-          // 3. update state variable
-          onClick={() => setShowForm((show) => !show)}
-        >
-          Share a fact
-        </button>
-      </header>
-
-      {/* 2. use state variable */}
-      {showForm ? <NewFactForm /> : null}
+      {showForm ? (
+        <NewFactForm setFacts={setFacts} setShowForm={setShowForm} />
+      ) : null}
 
       <main className="main">
         <CategoryFilter />
-        <FactsList />
+        <FactsList facts={facts} />
       </main>
     </>
   );
 }
 
-function NewFactForm() {
-  return <form className="fact-form">Fact form</form>;
+function Header({ showForm, setShowForm }) {
+  return (
+    <header className="header">
+      <div className="logo">
+        <img src="logo.png" alt="Today I Learned Logo" />
+        <h1>Today I Learned</h1>
+      </div>
+
+      <button
+        className="btn btn-large btn-open"
+        // 3. update state variable
+        onClick={() => setShowForm((show) => !show)}
+      >
+        {showForm ? "Close" : "Share a fact"}
+      </button>
+    </header>
+  );
+}
+
+const CATEGORIES = [
+  { name: "technology", color: "#3b82f6" },
+  { name: "science", color: "#16a34a" },
+  { name: "finance", color: "#ef4444" },
+  { name: "society", color: "#eab308" },
+  { name: "entertainment", color: "#db2777" },
+  { name: "health", color: "#14b8a6" },
+  { name: "history", color: "#f97316" },
+  { name: "news", color: "#8b5cf6" },
+];
+
+function isValidHttpUrl(string) {
+  let url;
+  try {
+    url = new URL(string);
+  } catch (_) {
+    return false;
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
+}
+
+function NewFactForm({ setFacts, setShowForm }) {
+  const [text, setText] = useState("");
+  const [source, setSource] = useState("");
+  const [category, setCategory] = useState("");
+  const textLength = text.length;
+
+  function handleSubmit(e) {
+    // 1. Prevent browser reload
+    e.preventDefault();
+
+    // 2. Check if the data is valid. If so, create new fact
+    if (text && isValidHttpUrl(source) && category && text.length <= 200) {
+      // 3. Create a new fact object
+      const newFact = {
+        id: Math.round(Math.random() * 10000000),
+        text,
+        source,
+        category,
+        votesInteresting: 24,
+        votesMindblowing: 9,
+        votesFalse: 4,
+        createdIn: new Date().getFullYear(),
+      };
+
+      // 4. Add the new fact to the UI: add the fact to state
+      setFacts((facts) => [newFact, ...facts]);
+
+      // 5. Reset the input fields
+      setText("");
+      setSource("");
+      setCategory("");
+
+      // 6. Close the form
+      setShowForm(false);
+    }
+  }
+
+  return (
+    <form className="fact-form" onSubmit={handleSubmit}>
+      <input
+        type="text"
+        placeholder="Share a fact with world..."
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <span>{200 - textLength}</span>
+      <input
+        type="text"
+        placeholder="Trustworthy source..."
+        value={source}
+        onChange={(e) => setSource(e.target.value)}
+      />
+      <select value={category} onChange={(e) => setCategory(e.target.value)}>
+        <option value="">Choose category</option>
+        {CATEGORIES.map((cat) => (
+          <option key={cat.name} value={cat.name}>
+            {cat.name.toUpperCase()}
+          </option>
+        ))}
+      </select>
+      <button className="btn btn-large">Post</button>
+    </form>
+  );
 }
 
 function CategoryFilter() {
@@ -74,9 +162,8 @@ function CategoryFilter() {
   );
 }
 
-function FactsList() {
+function FactsList({ facts }) {
   // TEMPORARY
-  const facts = initialFacts;
 
   return (
     <section>
@@ -117,17 +204,6 @@ function Fact({ fact }) {
     </li>
   );
 }
-
-const CATEGORIES = [
-  { name: "technology", color: "#3b82f6" },
-  { name: "science", color: "#16a34a" },
-  { name: "finance", color: "#ef4444" },
-  { name: "society", color: "#eab308" },
-  { name: "entertainment", color: "#db2777" },
-  { name: "health", color: "#14b8a6" },
-  { name: "history", color: "#f97316" },
-  { name: "news", color: "#8b5cf6" },
-];
 
 const initialFacts = [
   {
